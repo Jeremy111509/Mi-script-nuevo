@@ -1,8 +1,6 @@
 --[[
     ================================================================
-    Script Mejorado v3.1: Con Botón Flotante de Minimizado (Solución Imagen)
-    Este script corrige los problemas de invisibilidad de pelo/accesorios y los
-    errores de velocidad/salto causados por valores excesivamente altos.
+    Script Final (v4.0): Botón Minimizado y Transparencia Global
     ================================================================
 ]]
 
@@ -20,7 +18,7 @@ local RootPart = Character:FindFirstChild("HumanoidRootPart")
 local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Name = "MiScriptExecutorGUI"
 ScreenGui.ResetOnSpawn = false 
-ScreenGui.Parent = game:GetService("CoreGui") -- Insertamos la GUI al inicio
+ScreenGui.Parent = game:GetService("CoreGui") -- Insertamos la GUI
 
 -- La Ventana Principal (MainFrame)
 local MainFrame = Instance.new("Frame")
@@ -42,7 +40,7 @@ Header.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
 Header.Parent = MainFrame
 
 local Title = Instance.new("TextLabel")
-Title.Text = "✨ Executor Pro Editado"
+Title.Text = "✨ Executor Pro Final"
 Title.Font = Enum.Font.SourceSansBold
 Title.TextColor3 = Color3.fromRGB(255, 255, 255)
 Title.TextSize = 18
@@ -50,6 +48,8 @@ Title.BackgroundTransparency = 1
 Title.Size = UDim2.new(1, -30, 1, 0) 
 Title.Position = UDim2.new(0, 0, 0, 0)
 Title.Parent = Header
+
+-- 3. CREACIÓN DEL BOTÓN FLOTANTE Y BOTÓN DE CIERRE "X"
 
 -- Botón de Cierre "X" (para minimizar al botón flotante)
 local CloseButton = Instance.new("TextButton")
@@ -62,36 +62,35 @@ CloseButton.Size = UDim2.new(0, 30, 1, 0)
 CloseButton.Position = UDim2.new(1, -30, 0, 0) 
 CloseButton.Parent = Header
 
--- 3. CREACIÓN DEL BOTÓN FLOTANTE (LA "BOLITA" DE MINIMIZADO)
-
-local MinimizationButton = Instance.new("TextButton") -- Usamos TextButton (cuadrado azul)
+-- Botón de Minimizado Flotante ("Bolita" - Usamos TextButton)
+local MinimizationButton = Instance.new("TextButton")
 MinimizationButton.Name = "MinimizationButton"
 MinimizationButton.BackgroundTransparency = 0 
-MinimizationButton.BackgroundColor3 = Color3.fromRGB(0, 150, 255) -- Color de la "bolita"
+MinimizationButton.BackgroundColor3 = Color3.fromRGB(0, 150, 255) 
 MinimizationButton.Text = "MENU" 
 MinimizationButton.Font = Enum.Font.SourceSansBold
 MinimizationButton.TextColor3 = Color3.fromRGB(255, 255, 255)
 MinimizationButton.TextSize = 14
 MinimizationButton.Size = UDim2.new(0, 50, 0, 50) 
-MinimizationButton.Position = UDim2.new(1, -60, 0.2, 0) -- Posición fija
+MinimizationButton.Position = UDim2.new(1, -60, 0.2, 0) 
 MinimizationButton.ZIndex = 10 
 MinimizationButton.Parent = ScreenGui 
 MinimizationButton.Draggable = true 
 
 -- Conexión de Clic para la bolita
 MinimizationButton.MouseButton1Click:Connect(function()
-    MainFrame.Visible = true -- Muestra la ventana principal
-    MinimizationButton.Visible = false -- Oculta la bolita
+    MainFrame.Visible = true 
+    MinimizationButton.Visible = false 
 end)
 
 -- Conexión de Clic para el botón 'X'
 CloseButton.MouseButton1Click:Connect(function()
-    MainFrame.Visible = false -- Oculta la ventana
-    MinimizationButton.Visible = true -- Muestra la bolita
+    MainFrame.Visible = false 
+    MinimizationButton.Visible = true 
 end)
 
 
--- 4. FUNCIONES Y BOTONES
+-- 4. FUNCIONES DE VELOCIDAD, SALTO E INVISIBILIDAD
 
 -- Función para crear una caja de texto con etiqueta
 local function createInputGroup(label, yPosition, placeholderText)
@@ -133,7 +132,6 @@ ApplySpeedButton.Parent = MainFrame
 
 ApplySpeedButton.MouseButton1Click:Connect(function()
     local newSpeed = tonumber(SpeedInput.Text) or 16 
-    -- Límites la velocidad a 2000 para evitar que el motor falle
     local safeSpeed = math.min(newSpeed, 2000) 
     
     if Humanoid and safeSpeed >= 16 then
@@ -160,7 +158,6 @@ ApplyJumpButton.Parent = MainFrame
 
 ApplyJumpButton.MouseButton1Click:Connect(function()
     local newJump = tonumber(JumpInput.Text) or 50
-    -- Límite el salto a 500
     local safeJump = math.min(newJump, 500) 
     
     if Humanoid and safeJump >= 50 then
@@ -171,7 +168,7 @@ ApplyJumpButton.MouseButton1Click:Connect(function()
     end
 end)
 
--- Botón de TOGGLE INVISIBILIDAD (Corregido para accesorios/pelo)
+-- Botón de TOGGLE INVISIBILIDAD (USANDO .Transparency para invisibilidad global)
 local IsInvisible = false
 local InvisibleButton = Instance.new("TextButton")
 InvisibleButton.Text = "👻 ACTIVAR INVISIBILIDAD"
@@ -186,23 +183,28 @@ InvisibleButton.Parent = MainFrame
 InvisibleButton.MouseButton1Click:Connect(function()
     IsInvisible = not IsInvisible
     
-    -- Recorre TODOS los objetos dentro del personaje, incluyendo accesorios
+    local targetTransparency = (IsInvisible and 1) or 0
+    
+    -- Recorre TODOS los objetos dentro del personaje
     for _, item in pairs(Character:GetDescendants()) do
         if item:IsA("BasePart") or item:IsA("Decal") or item:IsA("MeshPart") then
-            -- Usa LocalTransparencyModifier para invisibilidad del cliente
-            item.LocalTransparencyModifier = (IsInvisible and 1) or 0
+            -- Usamos .Transparency: Esto intenta replicar el cambio a otros jugadores
+            item.Transparency = targetTransparency
         elseif item:IsA("Accessory") then
-            -- Accede a la parte dentro del accesorio 
             if item:FindFirstChildOfClass("BasePart") then
-                item:FindFirstChildOfClass("BasePart").LocalTransparencyModifier = (IsInvisible and 1) or 0
+                item:FindFirstChildOfClass("BasePart").Transparency = targetTransparency
             end
+        end
+        -- También hacemos el HumanoidRootPart transparente
+        if item.Name == "HumanoidRootPart" then
+             item.Transparency = targetTransparency
         end
     end
     
     if IsInvisible then
         InvisibleButton.Text = "✅ INVISIBILIDAD ACTIVA (Desactivar)"
         InvisibleButton.BackgroundColor3 = Color3.fromRGB(50, 150, 50)
-        Title.Text = "¡Eres invisible (pelo incluido)!"
+        Title.Text = "Intentando ser invisible para otros..."
     else
         InvisibleButton.Text = "👻 ACTIVAR INVISIBILIDAD"
         InvisibleButton.BackgroundColor3 = Color3.fromRGB(150, 50, 150)
