@@ -1,22 +1,28 @@
 --[[
-    ======================================
-    Script Mejorado v3: Con Botón Flotante de Minimizado
-    ======================================
+    ================================================================
+    Script Mejorado v3.1: Con Botón Flotante de Minimizado (Solución Imagen)
+    Este script corrige los problemas de invisibilidad de pelo/accesorios y los
+    errores de velocidad/salto causados por valores excesivamente altos.
+    ================================================================
 ]]
 
--- 1. CONFIGURACIÓN DE VARIABLES (Se ejecutan al cargar el script)
+-- 1. CONFIGURACIÓN DE VARIABLES GLOBALES
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
+
+-- Esperamos al personaje para que el script no falle si carga tarde
 local Character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
 local Humanoid = Character:FindFirstChildOfClass("Humanoid") or Character:WaitForChild("Humanoid")
 local RootPart = Character:FindFirstChild("HumanoidRootPart")
 
--- Creamos el contenedor principal (ScreenGui)
+-- 2. CREACIÓN DEL CONTENEDOR PRINCIPAL Y VENTANA
+
 local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Name = "MiScriptExecutorGUI"
 ScreenGui.ResetOnSpawn = false 
+ScreenGui.Parent = game:GetService("CoreGui") -- Insertamos la GUI al inicio
 
--- Creamos el Frame (la ventana principal)
+-- La Ventana Principal (MainFrame)
 local MainFrame = Instance.new("Frame")
 MainFrame.Size = UDim2.new(0, 280, 0, 480) 
 MainFrame.Position = UDim2.new(0.5, -140, 0.5, -240)
@@ -26,45 +32,9 @@ MainFrame.BorderSizePixel = 1
 MainFrame.Active = true 
 MainFrame.Draggable = true
 MainFrame.Parent = ScreenGui
-MainFrame.Visible = false -- IMPORTANTE: Empieza oculto
+MainFrame.Visible = false -- Empieza oculto
 
-
--- 2. CREACIÓN DEL BOTÓN FLOTANTE (LA "BOLITA" DE MINIMIZADO)
-
-local MinimizationButton = Instance.new("ImageButton")
-MinimizationButton.Name = "MinimizationButton"
-MinimizationButton.BackgroundTransparency = 1
-MinimizationButton.Size = UDim2.new(0, 50, 0, 50) -- Tamaño de la bolita
-MinimizationButton.Position = UDim2.new(1, -60, 0.2, 0) -- Posiciona en la esquina derecha
-MinimizationButton.ZIndex = 10 -- Asegura que esté por encima de todo
-MinimizationButton.Image = "rbxassetid://9810574577" -- ID de una imagen de icono de herramienta (puedes usar la tuya)
-MinimizationButton.Parent = ScreenGui -- Es hijo directo del ScreenGui para que sea flotante
-MinimizationButton.Draggable = true -- Permite arrastrar la bolita
-
-MinimizationButton.MouseButton1Click:Connect(function()
-    MainFrame.Visible = not MainFrame.Visible -- Invierte la visibilidad de la ventana
-    MinimizationButton.Visible = not MainFrame.Visible -- Oculta la bolita si la ventana principal se abre
-end)
-
--- Botón para cerrar la GUI completamente (para salir del script)
-local CloseButton = Instance.new("TextButton")
-CloseButton.Text = "X"
-CloseButton.Font = Enum.Font.SourceSansBold
-CloseButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-CloseButton.TextSize = 18
-CloseButton.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
-CloseButton.Size = UDim2.new(0, 30, 1, 0)
-CloseButton.Position = UDim2.new(1, -30, 0, 0) -- Posiciona en la esquina superior derecha
-CloseButton.Parent = Header
-
-CloseButton.MouseButton1Click:Connect(function()
-    MainFrame.Visible = false -- Oculta la ventana
-    MinimizationButton.Visible = true -- Muestra la bolita para volver a abrir
-end)
-
-
--- ... (Resto del código de la Cabecera, Título y las funciones, sin cambios sustanciales) ...
-
+-- Cabecera y Título
 local Header = Instance.new("Frame")
 Header.Name = "Header"
 Header.Size = UDim2.new(1, 0, 0, 30)
@@ -77,13 +47,54 @@ Title.Font = Enum.Font.SourceSansBold
 Title.TextColor3 = Color3.fromRGB(255, 255, 255)
 Title.TextSize = 18
 Title.BackgroundTransparency = 1
-Title.Size = UDim2.new(1, -30, 1, 0) -- Un poco más pequeño para dejar espacio a la X
+Title.Size = UDim2.new(1, -30, 1, 0) 
 Title.Position = UDim2.new(0, 0, 0, 0)
 Title.Parent = Header
 
--- Función para crear una etiqueta y una caja de texto (para editar valores)
+-- Botón de Cierre "X" (para minimizar al botón flotante)
+local CloseButton = Instance.new("TextButton")
+CloseButton.Text = "X"
+CloseButton.Font = Enum.Font.SourceSansBold
+CloseButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+CloseButton.TextSize = 18
+CloseButton.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
+CloseButton.Size = UDim2.new(0, 30, 1, 0)
+CloseButton.Position = UDim2.new(1, -30, 0, 0) 
+CloseButton.Parent = Header
+
+-- 3. CREACIÓN DEL BOTÓN FLOTANTE (LA "BOLITA" DE MINIMIZADO)
+
+local MinimizationButton = Instance.new("TextButton") -- Usamos TextButton (cuadrado azul)
+MinimizationButton.Name = "MinimizationButton"
+MinimizationButton.BackgroundTransparency = 0 
+MinimizationButton.BackgroundColor3 = Color3.fromRGB(0, 150, 255) -- Color de la "bolita"
+MinimizationButton.Text = "MENU" 
+MinimizationButton.Font = Enum.Font.SourceSansBold
+MinimizationButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+MinimizationButton.TextSize = 14
+MinimizationButton.Size = UDim2.new(0, 50, 0, 50) 
+MinimizationButton.Position = UDim2.new(1, -60, 0.2, 0) -- Posición fija
+MinimizationButton.ZIndex = 10 
+MinimizationButton.Parent = ScreenGui 
+MinimizationButton.Draggable = true 
+
+-- Conexión de Clic para la bolita
+MinimizationButton.MouseButton1Click:Connect(function()
+    MainFrame.Visible = true -- Muestra la ventana principal
+    MinimizationButton.Visible = false -- Oculta la bolita
+end)
+
+-- Conexión de Clic para el botón 'X'
+CloseButton.MouseButton1Click:Connect(function()
+    MainFrame.Visible = false -- Oculta la ventana
+    MinimizationButton.Visible = true -- Muestra la bolita
+end)
+
+
+-- 4. FUNCIONES Y BOTONES
+
+-- Función para crear una caja de texto con etiqueta
 local function createInputGroup(label, yPosition, placeholderText)
-    -- Etiqueta
     local Label = Instance.new("TextLabel")
     Label.Text = label
     Label.TextXAlignment = Enum.TextXAlignment.Left
@@ -93,7 +104,6 @@ local function createInputGroup(label, yPosition, placeholderText)
     Label.Position = UDim2.new(0.05, 0, 0, yPosition)
     Label.Parent = MainFrame
 
-    -- Caja de texto (TextBox)
     local TextBox = Instance.new("TextBox")
     TextBox.Text = placeholderText 
     TextBox.PlaceholderText = placeholderText
@@ -106,11 +116,11 @@ local function createInputGroup(label, yPosition, placeholderText)
     return TextBox
 end
 
--- Creamos los campos de entrada
+-- Campos de entrada
 local SpeedInput = createInputGroup("🏃 Velocidad (WalkSpeed):", 40, "200") 
 local JumpInput = createInputGroup("🚀 Potencia de Salto (JumpPower):", 120, "150") 
 
--- Función para aplicar la Velocidad (CON LÍMITE)
+-- Botón Aplicar Velocidad
 local ApplySpeedButton = Instance.new("TextButton")
 ApplySpeedButton.Text = "APLICAR VELOCIDAD"
 ApplySpeedButton.Font = Enum.Font.SourceSansBold
@@ -123,6 +133,7 @@ ApplySpeedButton.Parent = MainFrame
 
 ApplySpeedButton.MouseButton1Click:Connect(function()
     local newSpeed = tonumber(SpeedInput.Text) or 16 
+    -- Límites la velocidad a 2000 para evitar que el motor falle
     local safeSpeed = math.min(newSpeed, 2000) 
     
     if Humanoid and safeSpeed >= 16 then
@@ -136,7 +147,7 @@ ApplySpeedButton.MouseButton1Click:Connect(function()
     end
 end)
 
--- Función para aplicar el Salto (CON LÍMITE)
+-- Botón Aplicar Salto
 local ApplyJumpButton = Instance.new("TextButton")
 ApplyJumpButton.Text = "APLICAR SALTO"
 ApplyJumpButton.Font = Enum.Font.SourceSansBold
@@ -149,6 +160,7 @@ ApplyJumpButton.Parent = MainFrame
 
 ApplyJumpButton.MouseButton1Click:Connect(function()
     local newJump = tonumber(JumpInput.Text) or 50
+    -- Límite el salto a 500
     local safeJump = math.min(newJump, 500) 
     
     if Humanoid and safeJump >= 50 then
@@ -159,7 +171,7 @@ ApplyJumpButton.MouseButton1Click:Connect(function()
     end
 end)
 
--- FUNCIÓN PARA LA INVISIBILIDAD MEJORADA
+-- Botón de TOGGLE INVISIBILIDAD (Corregido para accesorios/pelo)
 local IsInvisible = false
 local InvisibleButton = Instance.new("TextButton")
 InvisibleButton.Text = "👻 ACTIVAR INVISIBILIDAD"
@@ -174,10 +186,13 @@ InvisibleButton.Parent = MainFrame
 InvisibleButton.MouseButton1Click:Connect(function()
     IsInvisible = not IsInvisible
     
+    -- Recorre TODOS los objetos dentro del personaje, incluyendo accesorios
     for _, item in pairs(Character:GetDescendants()) do
         if item:IsA("BasePart") or item:IsA("Decal") or item:IsA("MeshPart") then
+            -- Usa LocalTransparencyModifier para invisibilidad del cliente
             item.LocalTransparencyModifier = (IsInvisible and 1) or 0
         elseif item:IsA("Accessory") then
+            -- Accede a la parte dentro del accesorio 
             if item:FindFirstChildOfClass("BasePart") then
                 item:FindFirstChildOfClass("BasePart").LocalTransparencyModifier = (IsInvisible and 1) or 0
             end
@@ -195,7 +210,7 @@ InvisibleButton.MouseButton1Click:Connect(function()
     end
 end)
 
--- Botón de Teletransporte (TeleportButton)
+-- Botón de Teletransporte
 local TeleportButton = Instance.new("TextButton")
 TeleportButton.Text = "🏠 Teleport a X=0, Y=100, Z=0"
 TeleportButton.Font = Enum.Font.SourceSans
@@ -212,8 +227,3 @@ TeleportButton.MouseButton1Click:Connect(function()
         Title.Text = "¡Teletransportado a 0, 100, 0!"
     end
 end)
-
-
--- 3. INSERCIÓN DE LA GUI EN EL JUEGO
-ScreenGui.Parent = game:GetService("CoreGui")
-
