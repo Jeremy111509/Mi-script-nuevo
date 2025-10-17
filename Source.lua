@@ -1,6 +1,6 @@
 --[[
     ======================================
-    Script Mejorado v2: Corrección de errores y Accesorios
+    Script Mejorado v3: Con Botón Flotante de Minimizado
     ======================================
 ]]
 
@@ -26,8 +26,44 @@ MainFrame.BorderSizePixel = 1
 MainFrame.Active = true 
 MainFrame.Draggable = true
 MainFrame.Parent = ScreenGui
+MainFrame.Visible = false -- IMPORTANTE: Empieza oculto
 
--- ... (Código de la Cabecera, Título y Botón Ocultar/Mostrar (ToggleButton) - Sin cambios) ...
+
+-- 2. CREACIÓN DEL BOTÓN FLOTANTE (LA "BOLITA" DE MINIMIZADO)
+
+local MinimizationButton = Instance.new("ImageButton")
+MinimizationButton.Name = "MinimizationButton"
+MinimizationButton.BackgroundTransparency = 1
+MinimizationButton.Size = UDim2.new(0, 50, 0, 50) -- Tamaño de la bolita
+MinimizationButton.Position = UDim2.new(1, -60, 0.2, 0) -- Posiciona en la esquina derecha
+MinimizationButton.ZIndex = 10 -- Asegura que esté por encima de todo
+MinimizationButton.Image = "rbxassetid://9810574577" -- ID de una imagen de icono de herramienta (puedes usar la tuya)
+MinimizationButton.Parent = ScreenGui -- Es hijo directo del ScreenGui para que sea flotante
+MinimizationButton.Draggable = true -- Permite arrastrar la bolita
+
+MinimizationButton.MouseButton1Click:Connect(function()
+    MainFrame.Visible = not MainFrame.Visible -- Invierte la visibilidad de la ventana
+    MinimizationButton.Visible = not MainFrame.Visible -- Oculta la bolita si la ventana principal se abre
+end)
+
+-- Botón para cerrar la GUI completamente (para salir del script)
+local CloseButton = Instance.new("TextButton")
+CloseButton.Text = "X"
+CloseButton.Font = Enum.Font.SourceSansBold
+CloseButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+CloseButton.TextSize = 18
+CloseButton.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
+CloseButton.Size = UDim2.new(0, 30, 1, 0)
+CloseButton.Position = UDim2.new(1, -30, 0, 0) -- Posiciona en la esquina superior derecha
+CloseButton.Parent = Header
+
+CloseButton.MouseButton1Click:Connect(function()
+    MainFrame.Visible = false -- Oculta la ventana
+    MinimizationButton.Visible = true -- Muestra la bolita para volver a abrir
+end)
+
+
+-- ... (Resto del código de la Cabecera, Título y las funciones, sin cambios sustanciales) ...
 
 local Header = Instance.new("Frame")
 Header.Name = "Header"
@@ -41,32 +77,9 @@ Title.Font = Enum.Font.SourceSansBold
 Title.TextColor3 = Color3.fromRGB(255, 255, 255)
 Title.TextSize = 18
 Title.BackgroundTransparency = 1
-Title.Size = UDim2.new(1, 0, 1, 0)
+Title.Size = UDim2.new(1, -30, 1, 0) -- Un poco más pequeño para dejar espacio a la X
+Title.Position = UDim2.new(0, 0, 0, 0)
 Title.Parent = Header
-
-local ToggleButton = Instance.new("TextButton")
-ToggleButton.Text = "X"
-ToggleButton.Font = Enum.Font.SourceSansBold
-ToggleButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-ToggleButton.TextSize = 18
-ToggleButton.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
-ToggleButton.Size = UDim2.new(0, 30, 1, 0)
-ToggleButton.Position = UDim2.new(1, -30, 0, 0)
-ToggleButton.Parent = Header
-
-local IsGUIVisible = true
-ToggleButton.MouseButton1Click:Connect(function()
-    IsGUIVisible = not IsGUIVisible
-    MainFrame.Visible = IsGUIVisible
-    if IsGUIVisible then
-        ToggleButton.Text = "X"
-        ToggleButton.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
-    else
-        ToggleButton.Text = "O"
-        ToggleButton.BackgroundColor3 = Color3.fromRGB(50, 200, 50)
-    end
-end)
-
 
 -- Función para crear una etiqueta y una caja de texto (para editar valores)
 local function createInputGroup(label, yPosition, placeholderText)
@@ -94,9 +107,8 @@ local function createInputGroup(label, yPosition, placeholderText)
 end
 
 -- Creamos los campos de entrada
-local SpeedInput = createInputGroup("🏃 Velocidad (WalkSpeed):", 40, "200") -- Valor inicial más rápido
-local JumpInput = createInputGroup("🚀 Potencia de Salto (JumpPower):", 120, "150") -- Valor inicial más alto
-
+local SpeedInput = createInputGroup("🏃 Velocidad (WalkSpeed):", 40, "200") 
+local JumpInput = createInputGroup("🚀 Potencia de Salto (JumpPower):", 120, "150") 
 
 -- Función para aplicar la Velocidad (CON LÍMITE)
 local ApplySpeedButton = Instance.new("TextButton")
@@ -110,8 +122,7 @@ ApplySpeedButton.Position = UDim2.new(0.05, 0, 0, 170)
 ApplySpeedButton.Parent = MainFrame
 
 ApplySpeedButton.MouseButton1Click:Connect(function()
-    local newSpeed = tonumber(SpeedInput.Text) or 16 -- Si no es número, usa 16
-    -- Establecer un límite seguro, ej. 2000 (puede variar por juego)
+    local newSpeed = tonumber(SpeedInput.Text) or 16 
     local safeSpeed = math.min(newSpeed, 2000) 
     
     if Humanoid and safeSpeed >= 16 then
@@ -138,7 +149,6 @@ ApplyJumpButton.Parent = MainFrame
 
 ApplyJumpButton.MouseButton1Click:Connect(function()
     local newJump = tonumber(JumpInput.Text) or 50
-    -- Establecer un límite seguro, ej. 500
     local safeJump = math.min(newJump, 500) 
     
     if Humanoid and safeJump >= 50 then
@@ -164,26 +174,20 @@ InvisibleButton.Parent = MainFrame
 InvisibleButton.MouseButton1Click:Connect(function()
     IsInvisible = not IsInvisible
     
-    -- Usamos :GetDescendants() para incluir TODAS las partes: cuerpo, pelo, accesorios
     for _, item in pairs(Character:GetDescendants()) do
         if item:IsA("BasePart") or item:IsA("Decal") or item:IsA("MeshPart") then
-            -- Aplica transparencia a todas las partes visibles
             item.LocalTransparencyModifier = (IsInvisible and 1) or 0
         elseif item:IsA("Accessory") then
-            -- Accede a la parte dentro del accesorio (Hair, Hat, etc.)
             if item:FindFirstChildOfClass("BasePart") then
                 item:FindFirstChildOfClass("BasePart").LocalTransparencyModifier = (IsInvisible and 1) or 0
             end
-        elseif item:IsA("Shirt") or item:IsA("Pants") then
-            -- La ropa no tiene transparencia, pero puedes eliminarla si quieres
-            -- Para este script, no las tocamos ya que la parte del cuerpo ya es invisible
         end
     end
     
     if IsInvisible then
         InvisibleButton.Text = "✅ INVISIBILIDAD ACTIVA (Desactivar)"
         InvisibleButton.BackgroundColor3 = Color3.fromRGB(50, 150, 50)
-        Title.Text = "¡Ahora eres invisible (pelo incluido)!"
+        Title.Text = "¡Eres invisible (pelo incluido)!"
     else
         InvisibleButton.Text = "👻 ACTIVAR INVISIBILIDAD"
         InvisibleButton.BackgroundColor3 = Color3.fromRGB(150, 50, 150)
@@ -208,6 +212,7 @@ TeleportButton.MouseButton1Click:Connect(function()
         Title.Text = "¡Teletransportado a 0, 100, 0!"
     end
 end)
+
 
 -- 3. INSERCIÓN DE LA GUI EN EL JUEGO
 ScreenGui.Parent = game:GetService("CoreGui")
