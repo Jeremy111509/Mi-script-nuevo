@@ -1,6 +1,9 @@
 --[[
     ================================================================
-    Script Final (v4.0): Botón Minimizado y Transparencia Global
+    Script Final (v5.0): Invisible Total (Phantom Mode)
+    - Botón de Minimizado Flotante ('MENU')
+    - Ajustes de Velocidad/Salto con límites
+    - Invisibilidad agresiva que intenta funcionar en el servidor.
     ================================================================
 ]]
 
@@ -62,7 +65,7 @@ CloseButton.Size = UDim2.new(0, 30, 1, 0)
 CloseButton.Position = UDim2.new(1, -30, 0, 0) 
 CloseButton.Parent = Header
 
--- Botón de Minimizado Flotante ("Bolita" - Usamos TextButton)
+-- Botón de Minimizado Flotante ("Bolita" - TextButton)
 local MinimizationButton = Instance.new("TextButton")
 MinimizationButton.Name = "MinimizationButton"
 MinimizationButton.BackgroundTransparency = 0 
@@ -168,10 +171,10 @@ ApplyJumpButton.MouseButton1Click:Connect(function()
     end
 end)
 
--- Botón de TOGGLE INVISIBILIDAD (USANDO .Transparency para invisibilidad global)
+-- Botón de TOGGLE INVISIBILIDAD (PHANTOM MODE)
 local IsInvisible = false
 local InvisibleButton = Instance.new("TextButton")
-InvisibleButton.Text = "👻 ACTIVAR INVISIBILIDAD"
+InvisibleButton.Text = "👻 ACTIVAR PHANTOM MODE (RIESGO)"
 InvisibleButton.Font = Enum.Font.SourceSansBold
 InvisibleButton.TextColor3 = Color3.fromRGB(255, 255, 255)
 InvisibleButton.TextSize = 16
@@ -183,32 +186,47 @@ InvisibleButton.Parent = MainFrame
 InvisibleButton.MouseButton1Click:Connect(function()
     IsInvisible = not IsInvisible
     
-    local targetTransparency = (IsInvisible and 1) or 0
-    
-    -- Recorre TODOS los objetos dentro del personaje
-    for _, item in pairs(Character:GetDescendants()) do
-        if item:IsA("BasePart") or item:IsA("Decal") or item:IsA("MeshPart") then
-            -- Usamos .Transparency: Esto intenta replicar el cambio a otros jugadores
-            item.Transparency = targetTransparency
-        elseif item:IsA("Accessory") then
-            if item:FindFirstChildOfClass("BasePart") then
-                item:FindFirstChildOfClass("BasePart").Transparency = targetTransparency
+    if IsInvisible then
+        InvisibleButton.Text = "✅ PHANTOM ACTIVO (Desactivar)"
+        InvisibleButton.BackgroundColor3 = Color3.fromRGB(50, 150, 50)
+        Title.Text = "¡Personaje desaparecido!"
+
+        -- 1. Forzar la transparencia (esto te hace invisible a ti)
+        for _, item in pairs(Character:GetDescendants()) do
+            if item:IsA("BasePart") or item:IsA("Decal") or item:IsA("MeshPart") then
+                item.Transparency = 1 
+            elseif item:IsA("Accessory") then
+                if item:FindFirstChildOfClass("BasePart") then
+                    item:FindFirstChildOfClass("BasePart").Transparency = 1
+                end
+            end
+            -- Hacemos el HumanoidRootPart transparente también
+            if item.Name == "HumanoidRootPart" then
+                 item.Transparency = 1
             end
         end
-        -- También hacemos el HumanoidRootPart transparente
-        if item.Name == "HumanoidRootPart" then
-             item.Transparency = targetTransparency
+
+        -- 2. MOVEMOS las partes del cuerpo (esto intenta desaparecer del render de otros)
+        for _, part in pairs(Character:GetChildren()) do
+            -- Solo movemos partes que son del cuerpo o accesorios (el HumanoidRootPart debe quedarse para moverte)
+            if part:IsA("BasePart") and part.Name ~= "HumanoidRootPart" then
+                part.Parent = nil -- Mover a la nada
+            elseif part:IsA("Accessory") then
+                part.Parent = nil
+            elseif part:IsA("Shirt") or part:IsA("Pants") then
+                part.Parent = nil
+            end
         end
-    end
-    
-    if IsInvisible then
-        InvisibleButton.Text = "✅ INVISIBILIDAD ACTIVA (Desactivar)"
-        InvisibleButton.BackgroundColor3 = Color3.fromRGB(50, 150, 50)
-        Title.Text = "Intentando ser invisible para otros..."
-    else
-        InvisibleButton.Text = "👻 ACTIVAR INVISIBILIDAD"
+
+    else -- Desactivar Phantom Mode
+        
+        InvisibleButton.Text = "👻 ACTIVAR PHANTOM MODE (RIESGO)"
         InvisibleButton.BackgroundColor3 = Color3.fromRGB(150, 50, 150)
-        Title.Text = "Visibilidad restaurada."
+        Title.Text = "Visibilidad restaurada. (Forzando Respawn)"
+
+        -- Restaurar: El respawn es necesario para recargar correctamente las partes movidas.
+        LocalPlayer:LoadCharacter()
+
     end
 end)
 
