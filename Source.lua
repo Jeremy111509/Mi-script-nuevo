@@ -1,4 +1,5 @@
---[ Delta Executor Teleport Script (2 Botones) ]--
+--[ Script para Ejecutar en Delta Executor ]--
+-- Crea y maneja los botones de teletransporte.
 
 -- Variables globales
 local posicionGuardada = nil
